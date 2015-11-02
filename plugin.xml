@@ -51,7 +51,7 @@
 		<source-file src="src/android/GrowthWrapper.java" target-dir="src/com/streethawk/StreetHawkGrowth"/>
 	</platform>
 	<info>
-	 StreetHawk Beacon plugin depends on StreetHawk core plugin. 
+	 StreetHawk Growth plugin depends on StreetHawk core plugin. 
 	 Install core plugin by using command
 	  
 	 cordova plugin add streethawkanalytics --variable APP_KEY=APP_KEY --variable URL_SCHEME=SCHEME
