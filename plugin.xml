@@ -15,7 +15,9 @@
                
         <!-- Plugin native SDK -->
         <header-file src="src/ios/SDK/Growth/Private/SHGrowth.h" />
-        <source-file src="src/ios/SDK/Growth/Private/SHGrowth.m" />        
+        <source-file src="src/ios/SDK/Growth/Private/SHGrowth.m" />
+        <header-file src="src/ios/SDK/Growth/Private/SHGrowthBridge.h" />
+        <source-file src="src/ios/SDK/Growth/Private/SHGrowthBridge.m" />
         <header-file src="src/ios/SDK/Growth/Publish/SHApp+Growth.h" />
         <source-file src="src/ios/SDK/Growth/Publish/SHApp+Growth.m" />
         
