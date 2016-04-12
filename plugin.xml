@@ -48,6 +48,10 @@
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>
         </receiver>
+        <service
+            android:name="com.streethawk.growth.GrowthWrapper"
+            android:enabled="true"
+            android:exported="true" />
 		</config-file>
 		 <source-file src="src/android/streethawkgrowth.jar" target-dir="libs/"/>
 		<source-file src="src/android/GrowthWrapper.java" target-dir="src/com/streethawk/StreetHawkGrowth"/>
