@@ -42,6 +42,7 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
 - (void)installRegistrationSucceededForGrowth:(NSNotification *)notification;
 - (void)installUpdateSucceededForGrowth:(NSNotification *)notification;
 - (void)handleGrowthRegister;
+- (NSString *)parseGrowthResult:(id)result withError:(NSError *)error;
 
 @end
 
@@ -215,13 +216,13 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
             NSAssert(!shStrIsEmpty(utm_source), @"Fail to find match utm_source in pre-defined channels.");
             UIWindow *presentWindow = shGetPresentWindow();
             SHMBProgressHUD *progressView = [SHMBProgressHUD showHUDAddedTo:presentWindow animated:YES];
-            progressView.detailsLabelText = shLocalizedString(@"STREETHAWK_Growth_Channel_GeneratingUrl", @"Generating share_guid_url...");
+            progressView.detailsLabel.text = shLocalizedString(@"STREETHAWK_Growth_Channel_GeneratingUrl", @"Generating share_guid_url...");
             [self originateShareWithCampaign:utm_campaign withSource:utm_source withMedium:utm_medium withContent:utm_content withTerm:utm_term shareUrl:shareUrl withDefaultUrl:default_url streetHawkGrowth_object:^(NSObject *result, NSError *error)
              {
                  dispatch_async(dispatch_get_main_queue(), ^
                     {
-                        [SHMBProgressHUD hideAllHUDsForView:presentWindow animated:YES];
-                        shPresentErrorAlert(error, YES);
+                        [SHMBProgressHUD hideHUDForView:presentWindow animated:YES];
+                        shPresentErrorAlertOrLog(error);
                         if (error == nil)
                         {
                             NSString *share_guid_url = (NSString *)result;
@@ -270,16 +271,16 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
                                         switch (result)
                                         {
                                             case SLComposeViewControllerResultCancelled:
-                                                resultView.labelText = shLocalizedString(@"STREETHAWK_Growth_Channel_PostCancel", @"Post is cancelled.");
+                                                resultView.label.text = shLocalizedString(@"STREETHAWK_Growth_Channel_PostCancel", @"Post is cancelled.");
                                                 break;
                                             case SLComposeViewControllerResultDone:
-                                                resultView.labelText = shLocalizedString(@"STREETHAWK_Growth_Channel_PostDone", @"Post successfully!");
+                                                resultView.label.text = shLocalizedString(@"STREETHAWK_Growth_Channel_PostDone", @"Post successfully!");
                                                 break;
                                             default:
                                                 NSAssert(NO, @"Unexpected share result.");
                                                 break;
                                         }
-                                        [resultView hide:YES afterDelay:1.5];
+                                        [resultView hideAnimated:YES afterDelay:1.5];
                                     };
                                     [presentWindow.rootViewController presentViewController:shareVC animated:YES completion:nil];
                                 }
@@ -371,7 +372,7 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
         }
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nullable error)
     {
-        self.isGrowthRegistered = NO; //this time register fail, do it next time.
+        //self.isGrowthRegistered = NO; //this time register fail, do it next time. //Server side throw error when meet duplication, and client side cannot retry.
         if (handler)
         {
             handler(nil, error);
@@ -400,34 +401,57 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
     }
     //parse for "share_guid_url" in url
     NSString *share_guid_url = nil;
-    NSDictionary *dictQuery = shParseGetParamStringToDict(shareUrl.query);  //it convert key and value to raw string from encoding too.
-    if (dictQuery != nil && [dictQuery isKindOfClass:[NSDictionary class]] && [dictQuery.allKeys containsObject:@"share_guid_url"])
+    if (!shIsUniversalLinking(shareUrlStr))
     {
-        share_guid_url = dictQuery[@"share_guid_url"];
-    }
-    if (![share_guid_url isKindOfClass:[NSString class]] || shStrIsEmpty(share_guid_url))
-    {
-        if (handler)
+        NSDictionary *dictQuery = shParseGetParamStringToDict(shareUrl.query);  //it convert key and value to raw string from encoding too.
+        if (dictQuery != nil && [dictQuery isKindOfClass:[NSDictionary class]] && [dictQuery.allKeys containsObject:@"share_guid_url"])
         {
-            handler(nil, nil);
+            share_guid_url = dictQuery[@"share_guid_url"];
         }
-        return; //not from Growth deeplinking, cannot find Growth identifier, just ignore.
+        if (![share_guid_url isKindOfClass:[NSString class]] || shStrIsEmpty(share_guid_url))
+        {
+            if (handler)
+            {
+                handler(nil, nil);
+            }
+            return; //not from Growth deeplinking, cannot find Growth identifier, just ignore.
+        }
+    }
+    else
+    {
+        share_guid_url = shareUrlStr;
     }
     NSAssert(StreetHawk.currentInstall.suid != nil && StreetHawk.currentInstall.suid.length > 0, @"Install id not ready for Growth increase.");
     NSMutableDictionary *dictParam = [NSMutableDictionary dictionary];
     [dictParam setObject:NONULL(StreetHawk.currentInstall.suid) forKey:@"sh_cuid"];
     [dictParam setObject:NONULL(share_guid_url) forKey:@"share_guid_url"];
-    [dictParam setObject:NONULL(shareUrl.scheme) forKey:@"scheme"];
-    NSString *uri =  shareUrl.resourceSpecifier;
-    if ([uri hasPrefix:@"//"])
+    if (!shIsUniversalLinking(shareUrlStr))
     {
-        uri = [uri substringFromIndex:2];
+        [dictParam setObject:NONULL(shareUrl.scheme) forKey:@"scheme"];
+        NSString *uri =  shareUrl.resourceSpecifier;
+        if ([uri hasPrefix:@"//"])
+        {
+            uri = [uri substringFromIndex:2];
+        }
+        [dictParam setObject:NONULL(uri) forKey:@"uri"];
     }
-    [dictParam setObject:NONULL(uri) forKey:@"uri"];    
     handler = [handler copy];
     //Not need to consider offline mode. If device is offline short link cannot redirect to full link and will not pass above check.
     [[SHHTTPSessionManager sharedInstance] POST:[NSString stringWithFormat:@"%@/increase_clicks/", GrowthServer] hostVersion:SHHostVersion_Unknown body:dictParam success:^(NSURLSessionDataTask * _Nullable task, id  _Nullable responseObject)
     {
+        if (shIsUniversalLinking(shareUrlStr)) //universal linking get a chance to convert to real deeplinking url
+        {
+            SHLog(@"Growth increase click try to open: %@.", responseObject);
+            NSString *deeplinkingUrl = [self parseGrowthResult:responseObject withError:nil];
+            NSAssert(!shStrIsEmpty(deeplinkingUrl), @"Growth increase click request fail to get real deeplinking url from universal linking.");
+            if (shStrIsEmpty(deeplinkingUrl)) //still fail to get real deeplinking url, give universal linking to customer
+            {
+                if (StreetHawk.openUrlHandler != nil)
+                {
+                    StreetHawk.openUrlHandler(shareUrl);
+                }
+            }
+        }
         if (handler)
         {
             handler(responseObject, nil);
@@ -462,47 +486,54 @@ static const NSString *GrowthServer = @"https://pointzi.streethawk.com";
              return; //nothing to open, usually because have registered already.
          }
          SHLog(@"Growth register try to open: %@.", result);
-         if (error == nil && result != nil && [result isKindOfClass:[NSDictionary class]])
-         {
-             NSDictionary *dictResult = (NSDictionary *)result;
-             if ([dictResult.allKeys containsObject:@"message"] && [dictResult[@"message"] isKindOfClass:[NSDictionary class]])
-             {
-                 NSDictionary *dictMessage = dictResult[@"message"];
-                 if ([dictMessage.allKeys containsObject:@"scheme"] && [dictMessage[@"scheme"] isKindOfClass:[NSString class]] && [dictMessage.allKeys containsObject:@"uri"] && [dictMessage[@"uri"] isKindOfClass:[NSString class]])
-                 {
-                     NSString *deeplinkingUrl = [NSString stringWithFormat:@"%@://%@", dictMessage[@"scheme"], dictMessage[@"uri"]];
-                     dispatch_async(dispatch_get_main_queue(), ^
-                        {
-                            BOOL handledBySDK = NO;
-                            if (StreetHawk.developmentPlatform == SHDevelopmentPlatform_Native || StreetHawk.developmentPlatform == SHDevelopmentPlatform_Xamarin)
-                            {
-                                NSString *command = [NSURL URLWithString:deeplinkingUrl].host;
-                                if (command != nil && [command compare:@"launchvc" options:NSCaseInsensitiveSearch] == NSOrderedSame)
-                                {
-                                    SHDeepLinking *deepLinkingObj = [[SHDeepLinking alloc] init];
-                                    handledBySDK = [deepLinkingObj launchDeepLinkingVC:deeplinkingUrl withPushData:nil increaseGrowthClick:NO];
-                                    if (handledBySDK)
-                                    {
-                                        SHLog(@"Growth launch %@ successfully by StreetHawk SDK.", deeplinkingUrl);
-                                        return;
-                                    }
-                                }
-                            }
-                            if (!handledBySDK && StreetHawk.openUrlHandler != nil)
-                            {
-                                //not increase Growth click in this case when Growth just registered.
-                                StreetHawk.openUrlHandler([NSURL URLWithString:deeplinkingUrl]);
-                                SHLog(@"Growth handle %@ by openUrlHandler.", deeplinkingUrl);
-                            }
-                            else
-                            {
-                                SHLog(@"Growth url %@ not find suitable way to launch.", deeplinkingUrl);
-                            }
-                        });
-                 }
-             }
-         }
+         [self parseGrowthResult:result withError:error];
      }];
+}
+
+- (NSString *)parseGrowthResult:(id)result withError:(NSError *)error
+{
+    if (error == nil && result != nil && [result isKindOfClass:[NSDictionary class]])
+    {
+        NSDictionary *dictResult = (NSDictionary *)result;
+        if ([dictResult.allKeys containsObject:@"message"] && [dictResult[@"message"] isKindOfClass:[NSDictionary class]])
+        {
+            NSDictionary *dictMessage = dictResult[@"message"];
+            if ([dictMessage.allKeys containsObject:@"scheme"] && [dictMessage[@"scheme"] isKindOfClass:[NSString class]] && [dictMessage.allKeys containsObject:@"uri"] && [dictMessage[@"uri"] isKindOfClass:[NSString class]])
+            {
+                NSString *deeplinkingUrl = [NSString stringWithFormat:@"%@://%@", dictMessage[@"scheme"], dictMessage[@"uri"]];
+                dispatch_async(dispatch_get_main_queue(), ^
+                   {
+                       BOOL handledBySDK = NO;
+                       if (StreetHawk.developmentPlatform == SHDevelopmentPlatform_Native || StreetHawk.developmentPlatform == SHDevelopmentPlatform_Xamarin)
+                       {
+                           NSString *command = [NSURL URLWithString:deeplinkingUrl].host;
+                           if (command != nil && [command compare:@"launchvc" options:NSCaseInsensitiveSearch] == NSOrderedSame)
+                           {
+                               SHDeepLinking *deepLinkingObj = [[SHDeepLinking alloc] init];
+                               handledBySDK = [deepLinkingObj launchDeepLinkingVC:deeplinkingUrl withPushData:nil increaseGrowthClick:NO];
+                               if (handledBySDK)
+                               {
+                                   SHLog(@"Growth launch %@ successfully by StreetHawk SDK.", deeplinkingUrl);
+                                   return;
+                               }
+                           }
+                       }
+                       if (!handledBySDK && StreetHawk.openUrlHandler != nil)
+                       {
+                           //not increase Growth click in this case when Growth just registered.
+                           StreetHawk.openUrlHandler([NSURL URLWithString:deeplinkingUrl]);
+                           SHLog(@"Growth handle %@ by openUrlHandler.", deeplinkingUrl);
+                       }
+                       else
+                       {
+                           SHLog(@"Growth url %@ not find suitable way to launch.", deeplinkingUrl);
+                       }
+                   });
+                return deeplinkingUrl;
+            }
+        }
+    }
+    return nil;
 }
 
 #pragma mark - MFMessageComposeViewControllerDelegate

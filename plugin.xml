@@ -2,7 +2,7 @@
 <plugin id="com.streethawk.growth" version="1.8.1" xmlns="http://apache.org/cordova/ns/plugins/1.0"
 	xmlns:android="http://schemas.android.com/apk/res/android">
 	<name>StreetHawkGrowth</name>
-	<description> StreetHawk Growth feature lets your user share your application with friends. Also the feature can be extended to invite the new user to a deeplinked page inside your application. Create a Share button inside your application and call InviteFriendsToDownloadApplication to generate the share url. StreetHawk SDK will then ask user ways to share the generated url. That is (email, post on Facebook etc). Below are the APIs which generates sharable URL. A scheme for deeplinking is required for StreetHawk growth. </description>	    
+	<description>StreetHawk Growth feature lets your user share your application with friends. Also the feature can be extended to invite the new user to a deeplinked page inside your application. Create a Share button inside your application and call InviteFriendsToDownloadApplication to generate the share url. StreetHawk SDK will then ask user ways to share the generated url. That is (email, post on Facebook etc). Below are the APIs which generates sharable URL. A scheme for deeplinking is required for StreetHawk growth. </description>
     <license>Apache 2.0</license>
     <keywords>push,messaging,deeplinking,referral,analytics,geofencing,beacons,marketing,automation,organic growth,feeds</keywords>
 	<repo>https://github.com/streethawkphonegap/StreethawkPlugin</repo>
