@@ -117,10 +117,8 @@ public class GrowthWrapper extends Service implements IGrowth{
     
     @Override
     public void onReceiveDeepLinkUrl(final String deeplinkUrl) {
-        Log.e("Anurag","Received share URL"+deeplinkUrl+mIGrowthCallback);
         if(null!=mIGrowthCallback){
             	PluginResult presult = new PluginResult(PluginResult.Status.OK,deeplinkUrl);
-				presult.setKeepCallback(true);
 				mIGrowthCallback.sendPluginResult(presult);
         }
     }

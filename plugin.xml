@@ -32,6 +32,9 @@
 				<param name="android-package" value="com.streethawk.growth"/>
 			</feature>
 		</config-file>
+
+		<framework src="com.streethawk.phonegap:growth:1.8.5" />
+		
 		<config-file parent="/*" target="AndroidManifest.xml">
 		   
 		 </config-file>
@@ -53,8 +56,10 @@
             android:enabled="true"
             android:exported="true" />
 		</config-file>
+		<!--
 		 <source-file src="src/android/streethawkgrowth.jar" target-dir="libs/"/>
-		<source-file src="src/android/GrowthWrapper.java" target-dir="src/com/streethawk/StreetHawkGrowth"/>
+		 -->
+		<source-file src="src/android/GrowthWrapper.java" target-dir="src/com/streethawk/"/>
 	</platform>
 	<info>
 	 StreetHawk Growth plugin depends on StreetHawk core plugin. 
