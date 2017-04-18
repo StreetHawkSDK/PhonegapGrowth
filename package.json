@@ -1,0 +1,20 @@
+{
+  "name": "streethawkgrowth",
+  "version": "1.8.4",
+  "description": "The repository hosts Phonegap plugin of StreetHawk SDK's Growth module. The plugin is required if you wish to add app virality inside your application and fetch detailed Analytics based on app sharing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StreetHawkSDK/PhonegapGrowth.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/StreetHawkSDK/PhonegapGrowth/issues"
+  },
+  "homepage": "https://github.com/StreetHawkSDK/PhonegapGrowth#readme"
+}
