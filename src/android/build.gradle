@@ -3,6 +3,10 @@ buildscript {
         jcenter()
         maven { url "http://pkg.streethawk.com/artifactory/streethawk" }
     }
+   
+    dependencies {		
+        compile 'com.streethawk:growth:latest.release'		
+     }
 }
 
 
