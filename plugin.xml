@@ -32,7 +32,7 @@
 				<param name="android-package" value="com.streethawk.growth"/>
 			</feature>
 		</config-file>
-		<framework src="src/android/build.gradle" custom="true" type="gradleReference" />
+		<framework src="src/android/growth.gradle" custom="true" type="gradleReference" />
 		<config-file parent="/*" target="AndroidManifest.xml">
 		   
 		 </config-file>
