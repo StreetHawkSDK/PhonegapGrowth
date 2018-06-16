@@ -28,7 +28,7 @@
 #import <MessageUI/MessageUI.h> //for sending SMS and email
 #import <Social/Social.h> //for sharing to Facebook, twitter etc
 //header from Third-party
-#import "SHMBProgressHUD.h" //for progress view
+#import "MBProgressHUD.h" //for progress view
 
 #define GROWTH_REGISTERED   @"GROWTH_REGISTERED" //key for flag indicate growth is registered
 
@@ -224,13 +224,13 @@
             }
             NSAssert(!shStrIsEmpty(utm_source), @"Fail to find match utm_source in pre-defined channels.");
             UIWindow *presentWindow = shGetPresentWindow();
-            SHMBProgressHUD *progressView = [SHMBProgressHUD showHUDAddedTo:presentWindow animated:YES];
+            MBProgressHUD *progressView = [MBProgressHUD showHUDAddedTo:presentWindow animated:YES];
             progressView.detailsLabel.text = shLocalizedString(@"STREETHAWK_Growth_Channel_GeneratingUrl", @"Generating share_guid_url...");
             [self originateShareWithCampaign:utm_campaign withSource:utm_source withMedium:utm_medium withContent:utm_content withTerm:utm_term shareUrl:shareUrl withDefaultUrl:default_url streetHawkGrowth_object:^(NSObject *result, NSError *error)
              {
                  dispatch_async(dispatch_get_main_queue(), ^
                     {
-                        [SHMBProgressHUD hideHUDForView:presentWindow animated:YES];
+                        [MBProgressHUD hideHUDForView:presentWindow animated:YES];
                         shPresentErrorAlertOrLog(error);
                         if (error == nil)
                         {
@@ -275,8 +275,8 @@
                                     [shareVC addImage:[UIImage imageNamed:@"icon.png"]]; //share view has an obvious image part, use App's image.
                                     shareVC.completionHandler = ^(SLComposeViewControllerResult result)
                                     {
-                                        SHMBProgressHUD *resultView = [SHMBProgressHUD showHUDAddedTo:presentWindow animated:YES];
-                                        resultView.mode = SHMBProgressHUDModeText; //only show result text, not show progress bar.
+                                        MBProgressHUD *resultView = [MBProgressHUD showHUDAddedTo:presentWindow animated:YES];
+                                        resultView.mode = MBProgressHUDModeText; //only show result text, not show progress bar.
                                         switch (result)
                                         {
                                             case SLComposeViewControllerResultCancelled:
@@ -535,20 +535,13 @@
                 NSString *deeplinkingUrl = [NSString stringWithFormat:@"%@://%@", dictMessage[@"scheme"], dictMessage[@"uri"]];
                 dispatch_async(dispatch_get_main_queue(), ^
                    {
-                       BOOL handledBySDK = NO;
-                       if (StreetHawk.developmentPlatform == SHDevelopmentPlatform_Native || StreetHawk.developmentPlatform == SHDevelopmentPlatform_Xamarin)
+                       SHDeepLinking *deepLinkingObj = [[SHDeepLinking alloc] init];
+                       BOOL handledBySDK = [deepLinkingObj processDeeplinkingUrl:[NSURL URLWithString:deeplinkingUrl]
+                                                                    withPushData:nil withIncreaseGrowth:NO];
+                       if (handledBySDK)
                        {
-                           NSString *command = [NSURL URLWithString:deeplinkingUrl].host;
-                           if (command != nil && [command compare:@"launchvc" options:NSCaseInsensitiveSearch] == NSOrderedSame)
-                           {
-                               SHDeepLinking *deepLinkingObj = [[SHDeepLinking alloc] init];
-                               handledBySDK = [deepLinkingObj launchDeepLinkingVC:deeplinkingUrl withPushData:nil increaseGrowthClick:NO];
-                               if (handledBySDK)
-                               {
-                                   SHLog(@"Growth launch %@ successfully by StreetHawk SDK.", deeplinkingUrl);
-                                   return;
-                               }
-                           }
+                           SHLog(@"Growth url %@ processed by StreetHawk SDK.", deeplinkingUrl);
+                           return;
                        }
                        if (!handledBySDK && StreetHawk.openUrlHandler != nil)
                        {
