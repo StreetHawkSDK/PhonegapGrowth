@@ -7,12 +7,12 @@ The repository hosts Phonegap plugin of StreetHawk SDK's Growth module. The plug
 Add Growth plugin by running the below command.
 ```
 $ cd <APPLICATION_DIRECTORY>
-$ cordova plugin add streethawkbeacon
+$ cordova plugin add streethawkgrowth
 ```
 Note that Growth plugin requires StreetHawk Analytics plugin which can be added by running the below mentioned command
 
 ```
-cordova plugin add streethawkanalytics  --variable APP_KEY=<YOUR_APPLICATIONS_APP_KEY> --variable URL_SCHEME=<URL_SCHEME_OF_APP>
+cordova plugin add streethawkgrowth  --variable APP_KEY=<YOUR_APPLICATIONS_APP_KEY> --variable URL_SCHEME=<URL_SCHEME_OF_APP>
 ```
 Replace YOUR_APPLICATIONS_APP_KEY with app_key registered with StreetHawk for your application and URL_SCHEME_OF_APP with deeplinking scheme of your application.
 
