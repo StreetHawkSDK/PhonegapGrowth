@@ -17,7 +17,7 @@ cordova plugin add streethawkgrowth  --variable APP_KEY=<YOUR_APPLICATIONS_APP_K
 Replace YOUR_APPLICATIONS_APP_KEY with app_key registered with StreetHawk for your application and URL_SCHEME_OF_APP with deeplinking scheme of your application.
 
 ## Documentation
-Click [here](https://streethawk.freshdesk.com/solution/articles/5000680129-growth) for detailed documentation of StreetHawk's Growth plugin.
+Click [here](https://dashboard.streethawk.com/docs/sdks/phonegap/growth/) for detailed documentation of StreetHawk's Growth plugin.
 
 ## Other StreetHawk Plugins
 * [Beacon](https://github.com/StreetHawkSDK/PhonegapBeacon) for running beacon based campaigns

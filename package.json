@@ -1,6 +1,6 @@
 {
   "name": "streethawkgrowth",
-  "version": "1.8.15",
+  "version": "1.10.0",
   "description": "The repository hosts Phonegap plugin of StreetHawk SDK's Growth module. The plugin is required if you wish to add app virality inside your application and fetch detailed Analytics based on app sharing.",
   "main": "index.js",
   "scripts": {
